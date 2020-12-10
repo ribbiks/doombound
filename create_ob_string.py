@@ -22,8 +22,8 @@ COLORS = ['orange', 'yellow']
 #
 # select the ob to generate
 #
-tiles   = OB_DATA['ob 4']['tiles']
-expList = OB_DATA['ob 4']['uv']
+tiles   = OB_DATA['ob 1']['tiles']
+expList = OB_DATA['ob 1']['hntr']
 
 #
 lexico_tile = sorted([(int(n[1:]),n) for n in tiles.keys()])

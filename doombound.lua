@@ -119,7 +119,7 @@ end
 UI.AddParameter("ob_string", "obstacle string", "")
 UI.AddParameter("skill", "skill setting (2/3/4)", 4)
 UI.AddParameter("ob_num", "obstacle number", 1)
-UI.AddParameter("s_tag", "starting tag number", 100)
+UI.AddParameter("s_tag", "starting tag number", 1000)
 UI.AddParameter("conv_x", "where to build conveyors (x)", 0)
 UI.AddParameter("conv_y", "where to build conveyors (y)", -2048)
 UI.AddParameter("num_sound", "number of sound objects", 1)
@@ -147,11 +147,11 @@ EXP_CONV_OFFSET_Y = tonumber(parameters.conv_y)
 EXP_CLOSET_WIDTH  = 128
 MIN_REFIRE_WAIT   = 96
 --- tile specs
-TILE_SIZE      = 256
-TILE_FLOOR     = 0
-TILE_CEILING   = 128
-KEEN_CEILING   = 32
-TAGS_PER_TILE  = 5
+TILE_SIZE     = 256
+TILE_FLOOR    = 0
+TILE_CEILING  = 128
+KEEN_CEILING  = 32
+TAGS_PER_TILE = 5
 
 s = tostring(parameters.ob_string)
 ---s = "t1=(0,0);t2=(0,256);t3=(0,512);e1=[t2,t3];w1=160;e2=[t1,t3];w2=160;e3=[t1,t2];w3=320;"
@@ -164,7 +164,7 @@ s = tostring(parameters.ob_string)
 --- TAG_OFFSET + 2 = keen cubby
 --- TAG_OFFSET + 3 = burning-barrel conveyor
 --- TAG_OFFSET + 4 = burning-barrel blocking sector
-function draw_tile(x, y, border_num, color_num, TAG_OFFSET)
+function draw_tile(x, y, border_num, color_num, noise_id, TAG_OFFSET)
 	local p = Pen.From(x,y)
 	p.snaptogrid  = false
 	p.stitchrange = 1
@@ -947,7 +947,7 @@ function draw_tile(x, y, border_num, color_num, TAG_OFFSET)
 	local newThing2 = Map.InsertThing(x+TILE_SIZE/2+32, y-TILE_SIZE/2)
 	local newThing3 = Map.InsertThing(x+TILE_SIZE/2+64, y-TILE_SIZE/2)
 	newThing1.type  = 14
-	newThing2.type  = 84
+	newThing2.type  = noise_id
 	newThing3.type  = 14
 	newThing1.SetAngleDoom(270)
 	newThing2.SetAngleDoom(270)
@@ -1130,57 +1130,57 @@ function draw_voodoo_frame(x, y, total_wait, TAG_OFFSET, tag_difficulty)
 	newThing4.SetAngleDoom(270)
 end
 
-function draw_sound_closet(x, y, TAG_OFFSET)
-	local p = Pen.From(x,y)
-	p.snaptogrid  = false
-	p.stitchrange = 1
-	--- global sound closet
-	p.DrawVertexAt(Vector2D.From(x,y))
-	p.DrawVertexAt(Vector2D.From(x+128,y))
-	p.DrawVertexAt(Vector2D.From(x+128,y-128))
-	p.DrawVertexAt(Vector2D.From(x,y-128))
-	p.DrawVertexAt(Vector2D.From(x,y))
-	p.FinishPlacingVertices()
-	p.DrawVertexAt(Vector2D.From(x+16,y-16))
-	p.DrawVertexAt(Vector2D.From(x+112,y-16))
-	p.DrawVertexAt(Vector2D.From(x+112,y-112))
-	p.DrawVertexAt(Vector2D.From(x+16,y-112))
-	p.DrawVertexAt(Vector2D.From(x+16,y-16))
-	p.FinishPlacingVertices()
-	p.DrawVertexAt(Vector2D.From(x+32,y-32))
-	p.DrawVertexAt(Vector2D.From(x+96,y-32))
-	p.DrawVertexAt(Vector2D.From(x+96,y-96))
-	p.DrawVertexAt(Vector2D.From(x+32,y-96))
-	p.DrawVertexAt(Vector2D.From(x+32,y-32))
-	p.FinishPlacingVertices()
-	--- apply tags & actions
-	local allLinedefs = Map.GetLinedefs()
-	local allSectors  = Map.GetSectors()
-	local sInd = get_sector_index_from_linedef_coords(allSectors, allLinedefs, Vector2D.From(x+16,y-16), Vector2D.From(x+112,y-16))
-	allSectors[sInd].tag = TAG_OFFSET
-	allSectors[sInd].ceilheight = allSectors[sInd].floorheight
-	--- blocksound lines (why are these so obscure to set???)
-	local lInd = get_linedef_index(allLinedefs, Vector2D.From(x+16,y-16), Vector2D.From(x+112,y-16))
-	allLinedefs[lInd].SetFlag('64', true)
-	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+112,y-16), Vector2D.From(x+112,y-112))
-	allLinedefs[lInd].SetFlag('64', true)
-	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+112,y-112), Vector2D.From(x+16,y-112))
-	allLinedefs[lInd].SetFlag('64', true)
-	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+16,y-112), Vector2D.From(x+16,y-16))
-	allLinedefs[lInd].SetFlag('64', true)
-	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+32,y-32), Vector2D.From(x+96,y-32))
-	allLinedefs[lInd].SetFlag('64', true)
-	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+96,y-32), Vector2D.From(x+96,y-96))
-	allLinedefs[lInd].SetFlag('64', true)
-	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+96,y-96), Vector2D.From(x+32,y-96))
-	allLinedefs[lInd].SetFlag('64', true)
-	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+32,y-96), Vector2D.From(x+32,y-32))
-	allLinedefs[lInd].SetFlag('64', true)
-	--- add things
-	local newThing5 = Map.InsertThing(x+64, y-64)
-	newThing5.type  = 7
-	newThing5.SetAngleDoom(270)
-end
+--function draw_sound_closet(x, y, TAG_OFFSET)
+--	local p = Pen.From(x,y)
+--	p.snaptogrid  = false
+--	p.stitchrange = 1
+--	--- global sound closet
+--	p.DrawVertexAt(Vector2D.From(x,y))
+--	p.DrawVertexAt(Vector2D.From(x+128,y))
+--	p.DrawVertexAt(Vector2D.From(x+128,y-128))
+--	p.DrawVertexAt(Vector2D.From(x,y-128))
+--	p.DrawVertexAt(Vector2D.From(x,y))
+--	p.FinishPlacingVertices()
+--	p.DrawVertexAt(Vector2D.From(x+16,y-16))
+--	p.DrawVertexAt(Vector2D.From(x+112,y-16))
+--	p.DrawVertexAt(Vector2D.From(x+112,y-112))
+--	p.DrawVertexAt(Vector2D.From(x+16,y-112))
+--	p.DrawVertexAt(Vector2D.From(x+16,y-16))
+--	p.FinishPlacingVertices()
+--	p.DrawVertexAt(Vector2D.From(x+32,y-32))
+--	p.DrawVertexAt(Vector2D.From(x+96,y-32))
+--	p.DrawVertexAt(Vector2D.From(x+96,y-96))
+--	p.DrawVertexAt(Vector2D.From(x+32,y-96))
+--	p.DrawVertexAt(Vector2D.From(x+32,y-32))
+--	p.FinishPlacingVertices()
+--	--- apply tags & actions
+--	local allLinedefs = Map.GetLinedefs()
+--	local allSectors  = Map.GetSectors()
+--	local sInd = get_sector_index_from_linedef_coords(allSectors, allLinedefs, Vector2D.From(x+16,y-16), Vector2D.From(x+112,y-16))
+--	allSectors[sInd].tag = TAG_OFFSET
+--	allSectors[sInd].ceilheight = allSectors[sInd].floorheight
+--	--- blocksound lines (why are these so obscure to set???)
+--	local lInd = get_linedef_index(allLinedefs, Vector2D.From(x+16,y-16), Vector2D.From(x+112,y-16))
+--	allLinedefs[lInd].SetFlag('64', true)
+--	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+112,y-16), Vector2D.From(x+112,y-112))
+--	allLinedefs[lInd].SetFlag('64', true)
+--	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+112,y-112), Vector2D.From(x+16,y-112))
+--	allLinedefs[lInd].SetFlag('64', true)
+--	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+16,y-112), Vector2D.From(x+16,y-16))
+--	allLinedefs[lInd].SetFlag('64', true)
+--	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+32,y-32), Vector2D.From(x+96,y-32))
+--	allLinedefs[lInd].SetFlag('64', true)
+--	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+96,y-32), Vector2D.From(x+96,y-96))
+--	allLinedefs[lInd].SetFlag('64', true)
+--	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+96,y-96), Vector2D.From(x+32,y-96))
+--	allLinedefs[lInd].SetFlag('64', true)
+--	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+32,y-96), Vector2D.From(x+32,y-32))
+--	allLinedefs[lInd].SetFlag('64', true)
+--	--- add things
+--	local newThing5 = Map.InsertThing(x+64, y-64)
+--	newThing5.type  = 7
+--	newThing5.SetAngleDoom(270)
+--end
 
 ---
 ---
@@ -1210,11 +1210,11 @@ function draw_explosion_trigger(x, y, tag_offsets, TAG_OFFSET, sound_tag)
 	p.FinishPlacingVertices()
 	--- voodoo 4, global explosion sound
 	xPos = x+48+192
-	yPos = y-192-EXP_TO_SOUNDON
+	yPos = y-192-4
 	p.DrawVertexAt(Vector2D.From(xPos-16,yPos))
 	p.DrawVertexAt(Vector2D.From(xPos-32,yPos))
 	p.FinishPlacingVertices()
-	yPos = y-192-EXP_TO_SOUNDOFF
+	yPos = y-192-EXP_TO_FLOORUP-4
 	p.DrawVertexAt(Vector2D.From(xPos-0,yPos))
 	p.DrawVertexAt(Vector2D.From(xPos-16,yPos))
 	p.FinishPlacingVertices()
@@ -1231,10 +1231,10 @@ function draw_explosion_trigger(x, y, tag_offsets, TAG_OFFSET, sound_tag)
 	yPos = y-192-EXP_TO_LIGHTUP
 	for i=1, #tag_offsets do change_linedef(allLinedefs, Vector2D.From(xPos-(i-1)*len,yPos), Vector2D.From(xPos-i*len,yPos), 81, tag_offsets[i]+0) end
 	xPos = x+48+192
-	yPos = y-192-EXP_TO_SOUNDON
-	change_linedef(allLinedefs, Vector2D.From(xPos-16,yPos), Vector2D.From(xPos-32,yPos), 16385, sound_tag)
-	yPos = y-192-EXP_TO_SOUNDOFF
-	change_linedef(allLinedefs, Vector2D.From(xPos-0,yPos), Vector2D.From(xPos-16,yPos), 16961, sound_tag)
+	yPos = y-192-4
+	change_linedef(allLinedefs, Vector2D.From(xPos-16,yPos), Vector2D.From(xPos-32,yPos), 24769, sound_tag+4)
+	yPos = y-192-EXP_TO_FLOORUP-4
+	change_linedef(allLinedefs, Vector2D.From(xPos-0,yPos), Vector2D.From(xPos-16,yPos), 25089, sound_tag+4)
 end
 
 ---
@@ -1497,14 +1497,28 @@ else
 	currentExp_X     = EXP_CONV_OFFSET_X
 	currentExp_Y     = EXP_CONV_OFFSET_Y
 	for k, v in spairs(ob_tiles) do
-		print("creating tile " .. k .. ": (" .. tostring(v[1]) .. ", " .. tostring(v[2]) .. "), tag: " .. tostring(currentTagOffset))
 		if ONLY_TIMINGS == 0 then
-			draw_tile(v[1], v[2], v[3], v[4], currentTagOffset)
+			print("creating tile " .. k .. ": (" .. tostring(v[1]) .. ", " .. tostring(v[2]) .. "), tag: " .. tostring(currentTagOffset))
+			draw_tile(v[1], v[2], v[3], v[4], 84, currentTagOffset)
 			draw_barrel_closet(currentExp_X, currentExp_Y, currentTagOffset)
 		end
 		tile_2_tagOffset[k] = currentTagOffset
-		currentTagOffset = currentTagOffset + TAGS_PER_TILE
-		currentExp_X     = currentExp_X + EXP_CLOSET_WIDTH
+		currentTagOffset    = currentTagOffset + TAGS_PER_TILE
+		currentExp_X        = currentExp_X + EXP_CLOSET_WIDTH
+	end
+	--- barrel closets used for global sounds
+	sound_tile_X = currentExp_X + EXP_CLOSET_WIDTH*NUM_SOUND + 128 + 960 + 64
+	for i=1, NUM_SOUND do
+		my_id = "s" .. tostring(i)
+		if ONLY_TIMINGS == 0 then
+			print("creating tile " .. my_id .. ": (" .. sound_tile_X .. ", " .. currentExp_Y .. "), tag: " .. tostring(currentTagOffset))
+			draw_tile(sound_tile_X, currentExp_Y, 0, 1, 72, currentTagOffset)
+			draw_barrel_closet(currentExp_X, currentExp_Y, currentTagOffset)
+		end
+		tile_2_tagOffset[my_id] = currentTagOffset
+		currentTagOffset        = currentTagOffset + TAGS_PER_TILE
+		currentExp_X            = currentExp_X + EXP_CLOSET_WIDTH
+		sound_tile_X            = sound_tile_X + TILE_SIZE + 64
 	end
 	currentExp_X = currentExp_X + 128
 
@@ -1524,20 +1538,23 @@ else
 		draw_voodoo_frame(currentExp_X+640, currentExp_Y, ob_duration, currentTagOffset+10, TAG_HNTR_BLOCK)
 		skill_x_offset = 640
 	end
-	if ONLY_TIMINGS == 0 then
-		for i=1, NUM_SOUND do
-			draw_sound_closet(currentExp_X+960+64+(i-1)*192, currentExp_Y, currentTagOffset+15+i)
-		end
-	end
+	--if ONLY_TIMINGS == 0 then
+	--	for i=1, NUM_SOUND do
+	--		draw_sound_closet(currentExp_X+960+64+(i-1)*(TILE_SIZE+64), currentExp_Y, currentTagOffset+15+i)
+	--	end
+	--end
 
 	---
 	--- DRAW STARTS AND GLOBAL STUFF
 	---
+	y_skill = TILE_SIZE + 64
+	y_trans = TILE_SIZE + 64 + 256 + 64
+	y_swtch = TILE_SIZE + 64 + 256 + 64 + 640 + 64
 	print("\n=== DRAWING OB TRANSITION VOODOO...\n")
 	if DRAW_STARTS > 0 then
-		draw_skill_closet(currentExp_X+1024,     currentExp_Y-192, TAG_UV_BLOCK, TAG_UV_SCROLL, 4)
-		draw_skill_closet(currentExp_X+1024+128, currentExp_Y-192, TAG_HMP_BLOCK, TAG_HMP_SCROLL, 3)
-		draw_skill_closet(currentExp_X+1024+256, currentExp_Y-192, TAG_HNTR_BLOCK, TAG_HNTR_SCROLL, 2)
+		draw_skill_closet(currentExp_X+1024,     currentExp_Y-y_skill, TAG_UV_BLOCK, TAG_UV_SCROLL, 4)
+		draw_skill_closet(currentExp_X+1024+128, currentExp_Y-y_skill, TAG_HMP_BLOCK, TAG_HMP_SCROLL, 3)
+		draw_skill_closet(currentExp_X+1024+256, currentExp_Y-y_skill, TAG_HNTR_BLOCK, TAG_HNTR_SCROLL, 2)
 		gcoords = {-1,-1}
 		for i=1, DRAW_STARTS do
 			t_prevOff = OB_TRANSITION+(i-1)*5
@@ -1545,20 +1562,20 @@ else
 			t_scroll  = OB_TRANSITION+(i-1)*5 + 1
 			t_lift    = OB_TRANSITION+(i-1)*5 + 2
 			print("drawing transition: " .. tostring(i) .. " --> " .. tostring(i+1))
-			gcoords = draw_transition_closet(currentExp_X+1024+(i-1)*256, currentExp_Y-512, t_prevOff, t_nextOn, t_scroll, t_lift, gcoords)
+			gcoords = draw_transition_closet(currentExp_X+1024+(i-1)*256, currentExp_Y-y_trans, t_prevOff, t_nextOn, t_scroll, t_lift, gcoords)
 			if i < DRAW_STARTS then
 				t_prevOff = OB_TRANSITION+(i-0)*5
 				t_nextOn  = OB_TRANSITION+(i-1)*5
 				t_scroll  = OB_TRANSITION+(i-1)*5 + 3
 				t_lift    = OB_TRANSITION+(i-1)*5 + 4
 				print("drawing transition: " .. tostring(i+1) .. " --> " .. tostring(i))
-				gcoords = draw_transition_closet(currentExp_X+1024+(i-1)*256+128, currentExp_Y-512, t_prevOff, t_nextOn, t_scroll, t_lift, gcoords)
+				gcoords = draw_transition_closet(currentExp_X+1024+(i-1)*256+128, currentExp_Y-y_trans, t_prevOff, t_nextOn, t_scroll, t_lift, gcoords)
 			end
 			t_on   = OB_TRANSITION+(i-1)*5
 			t_off  = OB_TRANSITION+(i-1)*5
 			t_incr = OB_TRANSITION+(i-1)*5 + 2
 			t_decr = OB_TRANSITION+(i-1)*5 + 4
-			draw_transition_switches(currentExp_X+1024+(i-1)*256, currentExp_Y-1216, t_on, t_off, t_incr, t_decr)
+			draw_transition_switches(currentExp_X+1024+(i-1)*256, currentExp_Y-y_swtch, t_on, t_off, t_incr, t_decr)
 		end
 	end
 
@@ -1573,7 +1590,9 @@ else
 		for k2, v2 in spairs(v) do
 			t_off[k2] = tile_2_tagOffset[tonumber(v2.sub(v2,2))]
 		end
-		draw_explosion_trigger(currentExp_X+skill_x_offset, currentExp_Y, t_off, currentTagOffset, currentTagOffset+15+current_soundTag)
+		my_id = "s" .. tostring(current_soundTag)
+		s_tag = tile_2_tagOffset[my_id]
+		draw_explosion_trigger(currentExp_X+skill_x_offset, currentExp_Y, t_off, currentTagOffset, s_tag)
 		currentExp_Y = currentExp_Y - ob_waits[k]
 		current_soundTag = current_soundTag + 1
 		if current_soundTag > NUM_SOUND then
