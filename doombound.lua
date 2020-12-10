@@ -207,12 +207,14 @@ function draw_tile(x, y, border_num, color_num, noise_id, TAG_OFFSET)
 	p.FinishPlacingVertices()
 	--- keen cubby
 	local v5 = Vector2D.From(x+TILE_SIZE/2+24, y-TILE_SIZE/2+8)
-	p.DrawVertexAt(v5)
-	p.DrawVertexAt(v5+Vector2D.From(0,-16))
-	p.DrawVertexAt(v5+Vector2D.From(16,-16))
-	p.DrawVertexAt(v5+Vector2D.From(16,0))
-	p.DrawVertexAt(v5)
-	p.FinishPlacingVertices()
+	if noise_id > 0 then
+		p.DrawVertexAt(v5)
+		p.DrawVertexAt(v5+Vector2D.From(0,-16))
+		p.DrawVertexAt(v5+Vector2D.From(16,-16))
+		p.DrawVertexAt(v5+Vector2D.From(16,0))
+		p.DrawVertexAt(v5)
+		p.FinishPlacingVertices()
+	end
 	---
 	--- colored borders, this is gonna be a serious ordeal!!!
 	---
@@ -939,18 +941,20 @@ function draw_tile(x, y, border_num, color_num, noise_id, TAG_OFFSET)
 	change_sector(allSectors, Vector2D.From(x+TILE_SIZE/2+32, y-TILE_SIZE/2), TILE_FLOOR, TILE_CEILING+KEEN_CEILING, 0, TAG_OFFSET+2, DARK_VALUE)
 	change_linedef(allLinedefs, v3, v3+Vector2D.From(0,16), 213, TAG_OFFSET+1)
 	change_linedef(allLinedefs, v4, v4+Vector2D.From(0,16), 261, TAG_OFFSET+1)
-	change_linedef(allLinedefs, v5, v5+Vector2D.From(0,-16), 213, TAG_OFFSET+2)
-	change_linedef(allLinedefs, v5+Vector2D.From(0,-16), v5+Vector2D.From(16,-16), 261, TAG_OFFSET+2)
-	---change_linedef(allLinedefs, v5+Vector2D.From(16,-16), v5+Vector2D.From(16,0), 242, TAG_OFFSET+2)
+	-- no noise-making thing if we don't want it
+	if noise_id > 0 then
+		change_linedef(allLinedefs, v5, v5+Vector2D.From(0,-16), 213, TAG_OFFSET+2)
+		change_linedef(allLinedefs, v5+Vector2D.From(0,-16), v5+Vector2D.From(16,-16), 261, TAG_OFFSET+2)
+		local newThing2 = Map.InsertThing(x+TILE_SIZE/2+32, y-TILE_SIZE/2)
+		newThing2.type  = noise_id
+		newThing2.SetAngleDoom(270)
+	end
 	--- add things
 	local newThing1 = Map.InsertThing(x+TILE_SIZE/2, y-TILE_SIZE/2)
-	local newThing2 = Map.InsertThing(x+TILE_SIZE/2+32, y-TILE_SIZE/2)
 	local newThing3 = Map.InsertThing(x+TILE_SIZE/2+64, y-TILE_SIZE/2)
 	newThing1.type  = 14
-	newThing2.type  = noise_id
 	newThing3.type  = 14
 	newThing1.SetAngleDoom(270)
-	newThing2.SetAngleDoom(270)
 	newThing3.SetAngleDoom(270)
 end
 
@@ -1129,58 +1133,6 @@ function draw_voodoo_frame(x, y, total_wait, TAG_OFFSET, tag_difficulty)
 	newThing3.SetAngleDoom(270)
 	newThing4.SetAngleDoom(270)
 end
-
---function draw_sound_closet(x, y, TAG_OFFSET)
---	local p = Pen.From(x,y)
---	p.snaptogrid  = false
---	p.stitchrange = 1
---	--- global sound closet
---	p.DrawVertexAt(Vector2D.From(x,y))
---	p.DrawVertexAt(Vector2D.From(x+128,y))
---	p.DrawVertexAt(Vector2D.From(x+128,y-128))
---	p.DrawVertexAt(Vector2D.From(x,y-128))
---	p.DrawVertexAt(Vector2D.From(x,y))
---	p.FinishPlacingVertices()
---	p.DrawVertexAt(Vector2D.From(x+16,y-16))
---	p.DrawVertexAt(Vector2D.From(x+112,y-16))
---	p.DrawVertexAt(Vector2D.From(x+112,y-112))
---	p.DrawVertexAt(Vector2D.From(x+16,y-112))
---	p.DrawVertexAt(Vector2D.From(x+16,y-16))
---	p.FinishPlacingVertices()
---	p.DrawVertexAt(Vector2D.From(x+32,y-32))
---	p.DrawVertexAt(Vector2D.From(x+96,y-32))
---	p.DrawVertexAt(Vector2D.From(x+96,y-96))
---	p.DrawVertexAt(Vector2D.From(x+32,y-96))
---	p.DrawVertexAt(Vector2D.From(x+32,y-32))
---	p.FinishPlacingVertices()
---	--- apply tags & actions
---	local allLinedefs = Map.GetLinedefs()
---	local allSectors  = Map.GetSectors()
---	local sInd = get_sector_index_from_linedef_coords(allSectors, allLinedefs, Vector2D.From(x+16,y-16), Vector2D.From(x+112,y-16))
---	allSectors[sInd].tag = TAG_OFFSET
---	allSectors[sInd].ceilheight = allSectors[sInd].floorheight
---	--- blocksound lines (why are these so obscure to set???)
---	local lInd = get_linedef_index(allLinedefs, Vector2D.From(x+16,y-16), Vector2D.From(x+112,y-16))
---	allLinedefs[lInd].SetFlag('64', true)
---	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+112,y-16), Vector2D.From(x+112,y-112))
---	allLinedefs[lInd].SetFlag('64', true)
---	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+112,y-112), Vector2D.From(x+16,y-112))
---	allLinedefs[lInd].SetFlag('64', true)
---	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+16,y-112), Vector2D.From(x+16,y-16))
---	allLinedefs[lInd].SetFlag('64', true)
---	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+32,y-32), Vector2D.From(x+96,y-32))
---	allLinedefs[lInd].SetFlag('64', true)
---	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+96,y-32), Vector2D.From(x+96,y-96))
---	allLinedefs[lInd].SetFlag('64', true)
---	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+96,y-96), Vector2D.From(x+32,y-96))
---	allLinedefs[lInd].SetFlag('64', true)
---	lInd = get_linedef_index(allLinedefs, Vector2D.From(x+32,y-96), Vector2D.From(x+32,y-32))
---	allLinedefs[lInd].SetFlag('64', true)
---	--- add things
---	local newThing5 = Map.InsertThing(x+64, y-64)
---	newThing5.type  = 7
---	newThing5.SetAngleDoom(270)
---end
 
 ---
 ---
@@ -1499,7 +1451,7 @@ else
 	for k, v in spairs(ob_tiles) do
 		if ONLY_TIMINGS == 0 then
 			print("creating tile " .. k .. ": (" .. tostring(v[1]) .. ", " .. tostring(v[2]) .. "), tag: " .. tostring(currentTagOffset))
-			draw_tile(v[1], v[2], v[3], v[4], 84, currentTagOffset)
+			draw_tile(v[1], v[2], v[3], v[4], 0, currentTagOffset) -- 84 --> 0. no more local sound objects
 			draw_barrel_closet(currentExp_X, currentExp_Y, currentTagOffset)
 		end
 		tile_2_tagOffset[k] = currentTagOffset
@@ -1538,11 +1490,6 @@ else
 		draw_voodoo_frame(currentExp_X+640, currentExp_Y, ob_duration, currentTagOffset+10, TAG_HNTR_BLOCK)
 		skill_x_offset = 640
 	end
-	--if ONLY_TIMINGS == 0 then
-	--	for i=1, NUM_SOUND do
-	--		draw_sound_closet(currentExp_X+960+64+(i-1)*(TILE_SIZE+64), currentExp_Y, currentTagOffset+15+i)
-	--	end
-	--end
 
 	---
 	--- DRAW STARTS AND GLOBAL STUFF

@@ -12,18 +12,13 @@ from matplotlib.collections import PatchCollection
 SIM_PATH = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + '/'
 sys.path.append(SIM_PATH + 'obs/')
 
-from doombound_01 import t, T, COLORS, OB_DATA
-
-T = 256
-t = 128
-
-COLORS = ['orange', 'yellow']
+from doombound_02 import t, T, COLORS, OB_DATA
 
 #
 # select the ob to generate
 #
 tiles   = OB_DATA['ob 1']['tiles']
-expList = OB_DATA['ob 1']['hntr']
+expList = OB_DATA['ob 1']['uv']
 
 #
 lexico_tile = sorted([(int(n[1:]),n) for n in tiles.keys()])
