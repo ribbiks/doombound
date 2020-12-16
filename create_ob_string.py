@@ -1,5 +1,6 @@
 import os
 import sys
+import math
 import numpy as np
 import matplotlib.pyplot as mpl
 import matplotlib.colors as colors
@@ -14,11 +15,31 @@ sys.path.append(SIM_PATH + 'obs/')
 
 from doombound_02 import t, T, COLORS, OB_DATA
 
+def round(num):
+	return int(num+0.5)
+
+def rotate(point, origin, degrees):
+	radians = np.deg2rad(degrees)
+	(x, y)  = point
+	offset_x, offset_y = origin
+	adjusted_x = (x - offset_x)
+	adjusted_y = (y - offset_y)
+	cos_rad = np.cos(radians)
+	sin_rad = np.sin(radians)
+	qx = offset_x + cos_rad * adjusted_x + sin_rad * adjusted_y
+	qy = offset_y + -sin_rad * adjusted_x + cos_rad * adjusted_y
+	return (round(qx), round(qy))
+
 #
 # select the ob to generate
 #
 tiles   = OB_DATA['ob 3']['tiles']
 expList = OB_DATA['ob 3']['uv']
+
+for k in tiles.keys():
+	tp = (tiles[k][0], tiles[k][1])
+	newp = rotate(tp, (0,0), 270)
+	tiles[k] = (newp[0], newp[1], tiles[k][2], tiles[k][3], tiles[k][4], tiles[k][5])
 
 #
 lexico_tile = sorted([(int(n[1:]),n) for n in tiles.keys()])
