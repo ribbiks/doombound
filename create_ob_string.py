@@ -1,6 +1,5 @@
 import os
 import sys
-import math
 import numpy as np
 import matplotlib.pyplot as mpl
 import matplotlib.colors as colors
@@ -19,6 +18,8 @@ def round(num):
 	return int(num+0.5)
 
 def rotate(point, origin, degrees):
+	if round(degrees) == 0:
+		return point
 	radians = np.deg2rad(degrees)
 	(x, y)  = point
 	offset_x, offset_y = origin
@@ -33,12 +34,12 @@ def rotate(point, origin, degrees):
 #
 # select the ob to generate
 #
-tiles   = OB_DATA['ob 3']['tiles']
-expList = OB_DATA['ob 3']['uv']
+tiles   = OB_DATA['ob 4']['tiles']
+expList = OB_DATA['ob 4']['uv']
 
 for k in tiles.keys():
 	tp = (tiles[k][0], tiles[k][1])
-	newp = rotate(tp, (0,0), 270)
+	newp = rotate(tp, (0,0), 0)
 	tiles[k] = (newp[0], newp[1], tiles[k][2], tiles[k][3], tiles[k][4], tiles[k][5])
 
 #
