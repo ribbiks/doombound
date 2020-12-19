@@ -15,14 +15,14 @@ FLAT_MAIN_TILE   = 'ITS_RED2'
 DARK_VALUE       = 96
 
 --- HARD-CODED TAGS
-TAG_HNTR_BLOCK  = 5000
-TAG_HNTR_SCROLL = 5001
-TAG_HMP_BLOCK   = 5002
-TAG_HMP_SCROLL  = 5003
-TAG_UV_BLOCK    = 5004
-TAG_UV_SCROLL   = 5005
-UNIVERSAL_OB_ON = 5006
-OB_TRANSITION   = 5007
+TAG_HNTR_BLOCK  = 20000
+TAG_HNTR_SCROLL = 20001
+TAG_HMP_BLOCK   = 20002
+TAG_HMP_SCROLL  = 20003
+TAG_UV_BLOCK    = 20004
+TAG_UV_SCROLL   = 20005
+UNIVERSAL_OB_ON = 20006
+OB_TRANSITION   = 20007
 --- max tag = OB_TRANSITION + (# obs) x 5
 
 --- crashes if pattern is too complex
@@ -124,7 +124,7 @@ UI.AddParameter("conv_x", "where to build conveyors (x)", 0)
 UI.AddParameter("conv_y", "where to build conveyors (y)", -2048)
 UI.AddParameter("num_sound", "number of sound objects", 1)
 UI.AddParameter("only_timings", "only timings (0/1)", 0)
-UI.AddParameter("draw_starts", "draw transitions (i.e. # total obs, 0=None)", 0)
+UI.AddParameter("draw_starts", "draw transitions (i.e. # total obs, 0=None)", 1)
 parameters = UI.AskForParameters()
 
 STARTING_TAG   = tonumber(parameters.s_tag)
@@ -1095,6 +1095,15 @@ function draw_voodoo_frame(x, y, total_wait, TAG_OFFSET, tag_difficulty)
 	p.DrawVertexAt(Vector2D.From(x+48,y-total_wait-96))
 	p.DrawVertexAt(Vector2D.From(x+16,y-total_wait-96))
 	p.FinishPlacingVertices()
+	--- guard rails (to prevent voodoo doll drift, because that's apparently a thing)
+	for i=0, 3 do
+		p.DrawVertexAt(Vector2D.From(x+16+i*64,y-16))
+		p.DrawVertexAt(Vector2D.From(x+16+i*64,y-48))
+		p.FinishPlacingVertices()
+		p.DrawVertexAt(Vector2D.From(x+48+i*64,y-48))
+		p.DrawVertexAt(Vector2D.From(x+48+i*64,y-16))
+		p.FinishPlacingVertices()
+	end
 	--- apply tags & actions
 	local allLinedefs = Map.GetLinedefs()
 	local allSectors  = Map.GetSectors()
@@ -1119,6 +1128,15 @@ function draw_voodoo_frame(x, y, total_wait, TAG_OFFSET, tag_difficulty)
 	allSectors[sind4].floorheight = 0
 	allSectors[sind4].ceilheight  = 32
 	Map.JoinSectors({allSectors[sind1], allSectors[sind2], allSectors[sind3]})
+	local lInd = 0
+	for i=0, 3 do
+		lInd = get_linedef_index(allLinedefs, Vector2D.From(x+16+i*64,y-16), Vector2D.From(x+16+i*64,y-48))
+		allLinedefs[lInd].SetFlag("1", true)
+		allLinedefs[lInd].end_vertex.position = Vector2D.From(x+16+i*64, y-total_wait-192)
+		lInd = get_linedef_index(allLinedefs, Vector2D.From(x+48+i*64,y-48), Vector2D.From(x+48+i*64,y-16))
+		allLinedefs[lInd].SetFlag("1", true)
+		allLinedefs[lInd].start_vertex.position = Vector2D.From(x+48+i*64, y-total_wait-192)
+	end
 	--- add things
 	local newThing1 = Map.InsertThing(x+32, y-32)
 	local newThing2 = Map.InsertThing(x+32+64, y-32)
@@ -1134,59 +1152,63 @@ function draw_voodoo_frame(x, y, total_wait, TAG_OFFSET, tag_difficulty)
 	newThing4.SetAngleDoom(270)
 end
 
+--- pointless attempt to reduce code copy-pasting
+function draw_and_apply_actions_to_explosion_linedefs(xPos, yPos, tag_offsets, action_tag_offset, action)
+	local len = 1
+	local p   = Pen.From(xPos,yPos)
+	p.snaptogrid  = false
+	p.stitchrange = 1
+	local tag_base = {0,32,64,96}
+	local y_base   = {0,1,2,3}
+	for j=1, #tag_base do
+		if #tag_offsets > tag_base[j] then
+			len = math.floor(32/math.min(32,#tag_offsets-tag_base[j]))
+			-- when drawing vertices very close together, use "false, false"
+			p.DrawVertexAt(Vector2D.From(xPos,yPos-y_base[j]), false, false)
+			for i=tag_base[j]+1, math.min(tag_base[j]+32, #tag_offsets) do
+				p.DrawVertexAt(Vector2D.From(xPos-(i-tag_base[j])*len,yPos-y_base[j]), false, false)
+			end
+			p.FinishPlacingVertices()
+		end
+	end
+	--- actions
+	allLinedefs = Map.GetLinedefs()
+	for j=1, #tag_base do
+		if #tag_offsets > tag_base[j] then
+			len = math.floor(32/math.min(32,#tag_offsets-tag_base[j]))
+			for i=tag_base[j]+1, math.min(tag_base[j]+32, #tag_offsets) do
+				change_linedef(allLinedefs, Vector2D.From(xPos-(i-1-tag_base[j])*len,yPos-y_base[j]), Vector2D.From(xPos-(i-tag_base[j])*len,yPos-y_base[j]), action, tag_offsets[i]+action_tag_offset)
+			end
+		end
+	end
+end
+
 ---
+--- now supports up to 128 concurrent explosions!! (up from 32)
 ---
----
-function draw_explosion_trigger(x, y, tag_offsets, TAG_OFFSET, sound_tag)
+function draw_explosion_trigger(x, y, tag_offsets, sound_tag)
+	--- voodoo 1, floor lower
+	draw_and_apply_actions_to_explosion_linedefs(x+48, y-192, tag_offsets, 4, 24769)
+	--- voodoo 2, floor raise
+	draw_and_apply_actions_to_explosion_linedefs(x+48+64, y-192-EXP_TO_FLOORUP, tag_offsets, 4, 25089)
+	--- voodoo 3, light flashing
+	draw_and_apply_actions_to_explosion_linedefs(x+48+128, y-192-EXP_TO_LIGHTUP, tag_offsets, 0, 81)
+	--- voodoo 4, global explosion sound
 	local p = Pen.From(x,y)
 	p.snaptogrid  = false
 	p.stitchrange = 1
-	local len  = math.floor(32/#tag_offsets)
-	local xPos = x+48
-	local yPos = y-192
-	--- voodoo 1, floor lower
-	p.DrawVertexAt(Vector2D.From(xPos,yPos))
-	for i=1, #tag_offsets do p.DrawVertexAt(Vector2D.From(xPos-i*len,yPos)) end
-	p.FinishPlacingVertices()
-	--- voodoo 2, floor raise
-	xPos = x+48+64
-	yPos = y-192-EXP_TO_FLOORUP
-	p.DrawVertexAt(Vector2D.From(xPos,yPos))
-	for i=1, #tag_offsets do p.DrawVertexAt(Vector2D.From(xPos-i*len,yPos)) end
-	p.FinishPlacingVertices()
-	--- voodoo 3, light flashing
-	xPos = x+48+128
-	yPos = y-192-EXP_TO_LIGHTUP
-	p.DrawVertexAt(Vector2D.From(xPos,yPos))
-	for i=1, #tag_offsets do p.DrawVertexAt(Vector2D.From(xPos-i*len,yPos)) end
-	p.FinishPlacingVertices()
-	--- voodoo 4, global explosion sound
-	xPos = x+48+192
-	yPos = y-192-4
+	local xPos = x+48+192
+	local yPos = y-192-4
 	p.DrawVertexAt(Vector2D.From(xPos-16,yPos))
 	p.DrawVertexAt(Vector2D.From(xPos-32,yPos))
 	p.FinishPlacingVertices()
-	yPos = y-192-EXP_TO_FLOORUP-4
-	p.DrawVertexAt(Vector2D.From(xPos-0,yPos))
-	p.DrawVertexAt(Vector2D.From(xPos-16,yPos))
+	p.DrawVertexAt(Vector2D.From(xPos-0,yPos-EXP_TO_FLOORUP))
+	p.DrawVertexAt(Vector2D.From(xPos-16,yPos-EXP_TO_FLOORUP))
 	p.FinishPlacingVertices()
-	--- apply tags & actions
+	--- voodoo 4 actions
 	local allLinedefs = Map.GetLinedefs()
-	local allSectors  = Map.GetSectors()
-	xPos = x+48
-	yPos = y-192
-	for i=1, #tag_offsets do change_linedef(allLinedefs, Vector2D.From(xPos-(i-1)*len,yPos), Vector2D.From(xPos-i*len,yPos), 24769, tag_offsets[i]+4) end
-	xPos = x+48+64
-	yPos = y-192-EXP_TO_FLOORUP
-	for i=1, #tag_offsets do change_linedef(allLinedefs, Vector2D.From(xPos-(i-1)*len,yPos), Vector2D.From(xPos-i*len,yPos), 25089, tag_offsets[i]+4) end
-	xPos = x+48+128
-	yPos = y-192-EXP_TO_LIGHTUP
-	for i=1, #tag_offsets do change_linedef(allLinedefs, Vector2D.From(xPos-(i-1)*len,yPos), Vector2D.From(xPos-i*len,yPos), 81, tag_offsets[i]+0) end
-	xPos = x+48+192
-	yPos = y-192-4
 	change_linedef(allLinedefs, Vector2D.From(xPos-16,yPos), Vector2D.From(xPos-32,yPos), 24769, sound_tag+4)
-	yPos = y-192-EXP_TO_FLOORUP-4
-	change_linedef(allLinedefs, Vector2D.From(xPos-0,yPos), Vector2D.From(xPos-16,yPos), 25089, sound_tag+4)
+	change_linedef(allLinedefs, Vector2D.From(xPos-0,yPos-EXP_TO_FLOORUP), Vector2D.From(xPos-16,yPos-EXP_TO_FLOORUP), 25089, sound_tag+4)
 end
 
 ---
@@ -1431,7 +1453,7 @@ fail = false
 if ob_waits[#ob_waits] < 128+EXP_TO_SOUNDOFF-32 then
 	fail = true
 end
---- FAILURE 2: too many simultaneously tiles exploding (>32)
+--- FAILURE 2: too many simultaneously tiles exploding (>128)
 --- FAILURE 3: tile is refired too soon
 --- FAILURE 4: tiles are overlapping
 --- FAILURE 5: conveyor closet build locations overlap tiles
@@ -1539,7 +1561,7 @@ else
 		end
 		my_id = "s" .. tostring(current_soundTag)
 		s_tag = tile_2_tagOffset[my_id]
-		draw_explosion_trigger(currentExp_X+skill_x_offset, currentExp_Y, t_off, currentTagOffset, s_tag)
+		draw_explosion_trigger(currentExp_X+skill_x_offset, currentExp_Y, t_off, s_tag)
 		currentExp_Y = currentExp_Y - ob_waits[k]
 		current_soundTag = current_soundTag + 1
 		if current_soundTag > NUM_SOUND then
