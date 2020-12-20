@@ -34,8 +34,8 @@ def rotate(point, origin, degrees):
 #
 # select the ob to generate
 #
-tiles   = OB_DATA['test']['tiles']
-expList = OB_DATA['test']['uv']
+tiles   = OB_DATA['ob 5']['tiles']
+expList = OB_DATA['ob 5']['uv']
 
 for k in tiles.keys():
 	tp = (tiles[k][0], tiles[k][1])
