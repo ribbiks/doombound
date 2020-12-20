@@ -1095,15 +1095,6 @@ function draw_voodoo_frame(x, y, total_wait, TAG_OFFSET, tag_difficulty)
 	p.DrawVertexAt(Vector2D.From(x+48,y-total_wait-96))
 	p.DrawVertexAt(Vector2D.From(x+16,y-total_wait-96))
 	p.FinishPlacingVertices()
-	--- guard rails (to prevent voodoo doll drift, because that's apparently a thing)
-	for i=0, 3 do
-		p.DrawVertexAt(Vector2D.From(x+16+i*64,y-16))
-		p.DrawVertexAt(Vector2D.From(x+16+i*64,y-48))
-		p.FinishPlacingVertices()
-		p.DrawVertexAt(Vector2D.From(x+48+i*64,y-48))
-		p.DrawVertexAt(Vector2D.From(x+48+i*64,y-16))
-		p.FinishPlacingVertices()
-	end
 	--- apply tags & actions
 	local allLinedefs = Map.GetLinedefs()
 	local allSectors  = Map.GetSectors()
@@ -1129,14 +1120,6 @@ function draw_voodoo_frame(x, y, total_wait, TAG_OFFSET, tag_difficulty)
 	allSectors[sind4].ceilheight  = 32
 	Map.JoinSectors({allSectors[sind1], allSectors[sind2], allSectors[sind3]})
 	local lInd = 0
-	for i=0, 3 do
-		lInd = get_linedef_index(allLinedefs, Vector2D.From(x+16+i*64,y-16), Vector2D.From(x+16+i*64,y-48))
-		allLinedefs[lInd].SetFlag("1", true)
-		allLinedefs[lInd].end_vertex.position = Vector2D.From(x+16+i*64, y-total_wait-192)
-		lInd = get_linedef_index(allLinedefs, Vector2D.From(x+48+i*64,y-48), Vector2D.From(x+48+i*64,y-16))
-		allLinedefs[lInd].SetFlag("1", true)
-		allLinedefs[lInd].start_vertex.position = Vector2D.From(x+48+i*64, y-total_wait-192)
-	end
 	--- add things
 	local newThing1 = Map.InsertThing(x+32, y-32)
 	local newThing2 = Map.InsertThing(x+32+64, y-32)
@@ -1150,6 +1133,32 @@ function draw_voodoo_frame(x, y, total_wait, TAG_OFFSET, tag_difficulty)
 	newThing2.SetAngleDoom(270)
 	newThing3.SetAngleDoom(270)
 	newThing4.SetAngleDoom(270)
+end
+
+---
+--- separating guardrail drawing because we need to do it last (as to not split overlapping linedefs)
+---
+function draw_voodoo_frame_guardrails(x, y, total_wait)
+	local p = Pen.From(x,y)
+	p.snaptogrid  = false
+	p.stitchrange = 1
+	for i=0, 3 do
+		p.DrawVertexAt(Vector2D.From(x+16+i*64,y-16))
+		p.DrawVertexAt(Vector2D.From(x+16+i*64,y-48))
+		p.FinishPlacingVertices()
+		p.DrawVertexAt(Vector2D.From(x+48+i*64,y-48))
+		p.DrawVertexAt(Vector2D.From(x+48+i*64,y-16))
+		p.FinishPlacingVertices()
+	end
+	local allLinedefs = Map.GetLinedefs()
+	for i=0, 3 do
+		lInd = get_linedef_index(allLinedefs, Vector2D.From(x+16+i*64,y-16), Vector2D.From(x+16+i*64,y-48))
+		allLinedefs[lInd].SetFlag("1", true)
+		allLinedefs[lInd].end_vertex.position = Vector2D.From(x+16+i*64, y-total_wait-192)
+		lInd = get_linedef_index(allLinedefs, Vector2D.From(x+48+i*64,y-48), Vector2D.From(x+48+i*64,y-16))
+		allLinedefs[lInd].SetFlag("1", true)
+		allLinedefs[lInd].start_vertex.position = Vector2D.From(x+48+i*64, y-total_wait-192)
+	end
 end
 
 --- pointless attempt to reduce code copy-pasting
@@ -1512,6 +1521,7 @@ else
 		draw_voodoo_frame(currentExp_X+640, currentExp_Y, ob_duration, currentTagOffset+10, TAG_HNTR_BLOCK)
 		skill_x_offset = 640
 	end
+	voodoo_xy = {currentExp_X+skill_x_offset, currentExp_Y}
 
 	---
 	--- DRAW STARTS AND GLOBAL STUFF
@@ -1568,4 +1578,7 @@ else
 			current_soundTag = 1
 		end
 	end
+	--- draw guardrails last
+	draw_voodoo_frame_guardrails(voodoo_xy[1], voodoo_xy[2], ob_duration)
+
 end
