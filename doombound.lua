@@ -1154,10 +1154,12 @@ function draw_voodoo_frame_guardrails(x, y, total_wait)
 	for i=0, 3 do
 		lInd = get_linedef_index(allLinedefs, Vector2D.From(x+16+i*64,y-16), Vector2D.From(x+16+i*64,y-48))
 		allLinedefs[lInd].SetFlag("1", true)
-		allLinedefs[lInd].end_vertex.position = Vector2D.From(x+16+i*64, y-total_wait-192)
+		allLinedefs[lInd].start_vertex.position = Vector2D.From(x+16+i*64, y-96)
+		allLinedefs[lInd].end_vertex.position   = Vector2D.From(x+16+i*64, y-total_wait-128)
 		lInd = get_linedef_index(allLinedefs, Vector2D.From(x+48+i*64,y-48), Vector2D.From(x+48+i*64,y-16))
 		allLinedefs[lInd].SetFlag("1", true)
-		allLinedefs[lInd].start_vertex.position = Vector2D.From(x+48+i*64, y-total_wait-192)
+		allLinedefs[lInd].start_vertex.position = Vector2D.From(x+48+i*64, y-total_wait-128)
+		allLinedefs[lInd].end_vertex.position   = Vector2D.From(x+48+i*64, y-96)
 	end
 end
 
@@ -1530,7 +1532,7 @@ else
 	y_trans = TILE_SIZE + 64 + 256 + 64
 	y_swtch = TILE_SIZE + 64 + 256 + 64 + 640 + 64
 	print("\n=== DRAWING OB TRANSITION VOODOO...\n")
-	if DRAW_STARTS > 0 then
+	if DRAW_STARTS > 0 and ONLY_TIMINGS == 0 then
 		draw_skill_closet(currentExp_X+1024,     currentExp_Y-y_skill, TAG_UV_BLOCK, TAG_UV_SCROLL, 4)
 		draw_skill_closet(currentExp_X+1024+128, currentExp_Y-y_skill, TAG_HMP_BLOCK, TAG_HMP_SCROLL, 3)
 		draw_skill_closet(currentExp_X+1024+256, currentExp_Y-y_skill, TAG_HNTR_BLOCK, TAG_HNTR_SCROLL, 2)
