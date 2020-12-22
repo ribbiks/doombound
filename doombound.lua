@@ -985,14 +985,21 @@ function draw_barrel_closet(x, y, TAG_OFFSET)
 	p.DrawVertexAt(Vector2D.From(x+16,y-132))
 	p.DrawVertexAt(Vector2D.From(x+16,y-128))
 	p.FinishPlacingVertices()
+	--- primary tele
 	p.DrawVertexAt(Vector2D.From(x+48,y-144))
 	p.DrawVertexAt(Vector2D.From(x+16,y-144))
 	p.FinishPlacingVertices()
+	--- backup tele
 	p.DrawVertexAt(Vector2D.From(x+48,y-160))
 	p.DrawVertexAt(Vector2D.From(x+16,y-160))
 	p.FinishPlacingVertices()
-	p.DrawVertexAt(Vector2D.From(x+48,y-192))
-	p.DrawVertexAt(Vector2D.From(x+16,y-192))
+	--- secondary backup tele, because if you're running W you can magically block both. WOW.
+	p.DrawVertexAt(Vector2D.From(x+48,y-176))
+	p.DrawVertexAt(Vector2D.From(x+16,y-176))
+	p.FinishPlacingVertices()
+	--- accept defeat, go back to the start
+	p.DrawVertexAt(Vector2D.From(x+48,y-208))
+	p.DrawVertexAt(Vector2D.From(x+16,y-208))
 	p.FinishPlacingVertices()
 	--- apply tags & actions
 	local allLinedefs = Map.GetLinedefs()
@@ -1003,7 +1010,8 @@ function draw_barrel_closet(x, y, TAG_OFFSET)
 	change_sector(allSectors, Vector2D.From(x+32, y-130), 128, 128, 0, TAG_OFFSET+4, 192)
 	change_linedef(allLinedefs, Vector2D.From(x+48,y-144), Vector2D.From(x+16,y-144), 269, TAG_OFFSET)
 	change_linedef(allLinedefs, Vector2D.From(x+48,y-160), Vector2D.From(x+16,y-160), 269, TAG_OFFSET+1)
-	change_linedef(allLinedefs, Vector2D.From(x+48,y-192), Vector2D.From(x+16,y-192), 269, TAG_OFFSET+3)
+	change_linedef(allLinedefs, Vector2D.From(x+48,y-176), Vector2D.From(x+16,y-176), 269, TAG_OFFSET)
+	change_linedef(allLinedefs, Vector2D.From(x+48,y-208), Vector2D.From(x+16,y-208), 269, TAG_OFFSET+3)
 	--- add things
 	local newThing1 = Map.InsertThing(x+32, y-80)
 	local newThing2 = Map.InsertThing(x+32, y-112)
