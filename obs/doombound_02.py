@@ -1,7 +1,7 @@
 T = 256
 t = 128
 
-COLORS = ['orange', 'yellow']
+COLORS = ['orange', 'yellow', 'green', 'blue', 'darkblue', 'lightgray', 'dimgray']
 
 OB_DATA = {}
 
